@@ -36,6 +36,10 @@ assert note 2/3
 click 3,0
 assert note 1/3
 assert Groceries
+key ctrl+tab
+assert note 2/3
+key ctrl+shift+tab
+assert note 1/3
 
 # Delete with confirmation: cancel first, then confirm
 key ctrl+w
