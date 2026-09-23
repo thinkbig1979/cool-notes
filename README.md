@@ -1,7 +1,12 @@
 # cool-notes
 
-A tabbed note editor for the terminal. Every note lives in one plain-text file
-that you can open in any other editor. Changes save as you type.
+[![Built with Claude Code](https://img.shields.io/badge/Built_with-Claude_Code-D97757?logo=claude&logoColor=white)](https://claude.com/claude-code)
+
+A tabbed note editor for the terminal. All your notes are stored together in a
+single plain-text file, one tab per note, separated by marker lines. You can
+open that file in any other editor. Changes save as you type.
+
+![cool-notes demo: writing notes in tabs, quitting, and reopening where you left off](docs/demo.gif)
 
 ```
 go build -o cool-notes .
@@ -67,7 +72,10 @@ and the other version is saved next to the file as
 
 ## Settings and themes
 
-Settings live in `~/.config/cool-notes/` (override with `COOL_NOTES_CONFIG_DIR`):
+Settings live in `~/.config/cool-notes/`. To use a different folder, set the
+`COOL_NOTES_CONFIG_DIR` environment variable when you start the app, for example
+`COOL_NOTES_CONFIG_DIR=~/my-settings ./cool-notes`, or export it from your shell
+profile. The folder holds:
 
 - `config.json`: `file` (notes path) and `theme`. Delete `file` to see the
   first-run prompt again.
