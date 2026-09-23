@@ -92,15 +92,23 @@ func (m *Model) viewNotes() (string, *tea.Cursor) {
 	for len(lines) < m.height-statusRows {
 		lines = append(lines, strings.Repeat(" ", m.width))
 	}
-	lines = append(lines[:max(0, m.height-statusRows)], m.viewHints(m.height-2), m.viewStatus())
+	bar, searchX := "", -1
+	if m.search != nil {
+		bar, searchX = m.viewSearch()
+	} else {
+		bar = m.viewHints(m.height - 2)
+	}
+	lines = append(lines[:max(0, m.height-statusRows)], bar, m.viewStatus())
 	base := strings.Join(lines, "\n")
 
 	var cursor *tea.Cursor
-	switch m.modal {
-	case modalConfirmDelete:
+	switch {
+	case m.modal == modalConfirmDelete:
 		base = m.overlay(base, m.viewConfirm())
-	case modalHelp:
+	case m.modal == modalHelp:
 		base = m.overlay(base, m.viewHelp())
+	case searchX >= 0:
+		cursor = tea.NewCursor(min(searchX, m.width-1), m.height-2)
 	default:
 		if x, y, ok := e.CursorView(); ok {
 			cursor = tea.NewCursor(ex+x, ey+y)
@@ -290,7 +298,7 @@ func (m *Model) viewConfirm() string {
 		st.dialogTitle.Render("Delete this note?"),
 		"",
 		st.dialogText.Render("“" + title + "” will be removed from"),
-		st.dialogMuted.Render(filepath.Base(m.file.Path) + ". This can't be undone."),
+		st.dialogMuted.Render(filepath.Base(m.file.Path) + ". Ctrl+Z brings it back."),
 		"",
 		delBtn + gap + cancelBtn,
 		"",
@@ -313,15 +321,15 @@ var helpKeys = [][2]string{
 	{"Ctrl+W", "delete note"},
 	{"Alt+← →  Ctrl+PgUp/PgDn", "switch note"},
 	{"Alt+1…9", "jump to note"},
+	{"Alt+Shift+← →", "move note left / right"},
+	{"Ctrl+F", "find in all notes"},
 	{"Tab  Shift+Tab", "indent / dedent"},
-	{"Shift+arrows", "select"},
-	{"Ctrl+A", "select all"},
+	{"Shift+arrows  Ctrl+A", "select / select all"},
 	{"Ctrl+C  Ctrl+X  Ctrl+V", "copy / cut / paste"},
-	{"Ctrl+Z  Ctrl+Y", "undo / redo"},
+	{"Ctrl+Z  Ctrl+Y", "undo / redo (also undeletes a note)"},
 	{"Ctrl+← →", "move by word"},
 	{"F2  Shift+F2", "next / previous theme"},
 	{"Ctrl+Q", "quit"},
-	{"", ""},
 	{"Mouse", "click tab, × to delete, + for new"},
 	{"", "click, drag, double/triple-click to select"},
 }
@@ -333,7 +341,7 @@ func (m *Model) viewHelp() string {
 	for _, k := range helpKeys {
 		kw = max(kw, lipgloss.Width(k[0]))
 	}
-	lines := []string{st.dialogTitle.Render("Keys"), ""}
+	lines := []string{st.dialogTitle.Render("Keys")}
 	keyStyle := st.dialogText.Foreground(col(st.theme.Accent))
 	for _, k := range helpKeys {
 		lines = append(lines, keyStyle.Render(fmt.Sprintf("%-*s", kw, k[0]))+st.dialogText.Render("   ")+st.dialogText.Render(k[1]))

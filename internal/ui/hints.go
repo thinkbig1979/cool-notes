@@ -20,6 +20,7 @@ const (
 	actUndo
 	actIndent
 	actTheme
+	actFind
 	actHelp
 	actQuit
 )
@@ -39,6 +40,7 @@ func (m *Model) hints() []hint {
 		{"^T", "new", actNew, 0, false},
 		{"^W", "delete", actDelete, 1, false},
 		{"Alt+←→", "switch", actNext, 2, false},
+		{"^F", "find", actFind, 3, false},
 	}
 	if m.ed().HasSelection() {
 		h = append(h,
@@ -152,7 +154,12 @@ func (m *Model) runAction(a action) tea.Cmd {
 	case actCut:
 		return m.copy(true)
 	case actUndo:
+		if m.deleted != nil {
+			return m.restoreTab()
+		}
 		return m.edit(func(e *editor.Editor) { e.Undo() })
+	case actFind:
+		m.openSearch()
 	case actIndent:
 		return m.edit(func(e *editor.Editor) { e.Indent() })
 	case actTheme:

@@ -7,16 +7,36 @@ A tabbed note editor for the terminal. All your notes are stored together in a
 single plain-text file, one tab per note, separated by marker lines. You can
 open that file in any other editor. Changes save as you type.
 
-![cool-notes demo: writing notes in tabs, quitting, and reopening where you left off](docs/demo.gif)
+![cool-notes demo: notes in tabs, find across notes, moving and restoring a note, then quitting and reopening where you left off](docs/demo.gif)
 
 ## Install
 
 Prebuilt binaries are on the
 [releases page](https://github.com/thinkbig1979/cool-notes/releases) for Linux,
 macOS and Windows, on both amd64 (Intel/AMD) and arm64 (Apple Silicon, ARM).
-The commands below download the latest release for your machine.
+The easiest way to install is through a package manager, which also handles
+updates.
 
-### Linux and macOS
+### Homebrew (macOS, Linux)
+
+```sh
+brew install thinkbig1979/tap/cool-notes
+```
+
+Update with `brew upgrade cool-notes`.
+
+### Scoop (Windows)
+
+```powershell
+scoop bucket add thinkbig1979 https://github.com/thinkbig1979/scoop-bucket
+scoop install cool-notes
+```
+
+Update with `scoop update cool-notes`.
+
+### Linux and macOS, without Homebrew
+
+This downloads the latest release for your machine:
 
 ```sh
 os=$(uname -s | tr '[:upper:]' '[:lower:]')
@@ -37,7 +57,7 @@ If you download the archive in a browser instead, macOS blocks the unsigned
 binary on first run. Clear the flag with
 `xattr -d com.apple.quarantine ~/.local/bin/cool-notes`.
 
-### Windows
+### Windows, without Scoop
 
 In PowerShell:
 
@@ -75,9 +95,11 @@ cool-notes --version
 | Key | Action |
 |---|---|
 | `Ctrl+T` | New note (appended to the file) |
-| `Ctrl+W` | Delete note, after confirmation |
+| `Ctrl+W` | Delete note, after confirmation. `Ctrl+Z` straight after brings it back |
 | `Alt+←/→`, `Ctrl+PgUp/PgDn` | Previous / next note |
 | `Alt+1…9` | Jump to note (9 = last) |
+| `Alt+Shift+←/→`, `Ctrl+Shift+PgUp/PgDn` | Move the note left / right (changes its place in the file) |
+| `Ctrl+F` | Find in all notes. `Enter` / `Shift+Enter` next / previous match, `Esc` closes |
 | `Tab` / `Shift+Tab` | Indent / dedent the line, or every selected line |
 | `Shift+arrows`, `Ctrl+A` | Select, select all |
 | `Ctrl+C` / `Ctrl+X` / `Ctrl+V` | Copy / cut / paste (copy also sets the system clipboard via OSC 52) |
@@ -90,6 +112,10 @@ cool-notes --version
 A hotkey bar above the status line shows the main keys and adapts to the
 terminal width (copy and cut appear while text is selected). Click a hint to
 run it.
+
+Find ignores case and searches every note. Select a word before `Ctrl+F` to
+search for it. `↑` / `↓` also step through matches, which helps in terminals
+that send `Shift+Enter` as plain `Enter`.
 
 Mouse: click a tab to open it, `×` to delete it (middle-click works too), `+`
 for a new note. In the text, click to place the cursor, drag to select,
@@ -177,7 +203,11 @@ e2e/run.sh        # drives the real app in a virtual terminal with tui-goggles
 ## Releasing
 
 Pushing a `v*` tag runs GoReleaser (`.goreleaser.yaml`) in GitHub Actions, which
-tests, builds and publishes the binaries:
+tests, builds and publishes the binaries, then updates the Homebrew cask in
+[homebrew-tap](https://github.com/thinkbig1979/homebrew-tap) and the Scoop
+manifest in [scoop-bucket](https://github.com/thinkbig1979/scoop-bucket). Each
+of those repos has a write-only deploy key whose private half is stored as a
+secret here (`HOMEBREW_TAP_DEPLOY_KEY`, `SCOOP_BUCKET_DEPLOY_KEY`).
 
 ```sh
 git tag -a v0.2.0 -m "cool-notes v0.2.0" && git push origin v0.2.0

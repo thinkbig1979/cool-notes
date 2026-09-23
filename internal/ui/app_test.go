@@ -48,6 +48,18 @@ func press(m *Model, keys ...string) {
 			msg = tea.KeyPressMsg{Code: tea.KeyEnter}
 		case "esc":
 			msg = tea.KeyPressMsg{Code: tea.KeyEscape}
+		case "ctrl+z":
+			msg = tea.KeyPressMsg{Code: 'z', Mod: tea.ModCtrl}
+		case "ctrl+f":
+			msg = tea.KeyPressMsg{Code: 'f', Mod: tea.ModCtrl}
+		case "alt+shift+left":
+			msg = tea.KeyPressMsg{Code: tea.KeyLeft, Mod: tea.ModAlt | tea.ModShift}
+		case "alt+shift+right":
+			msg = tea.KeyPressMsg{Code: tea.KeyRight, Mod: tea.ModAlt | tea.ModShift}
+		case "shift+enter":
+			msg = tea.KeyPressMsg{Code: tea.KeyEnter, Mod: tea.ModShift}
+		case "backspace":
+			msg = tea.KeyPressMsg{Code: tea.KeyBackspace}
 		default:
 			for _, r := range k {
 				m.Update(tea.KeyPressMsg{Code: r, Text: string(r)})

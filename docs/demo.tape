@@ -1,5 +1,7 @@
 # Renders docs/demo.gif for the README. Needs vhs and ttyd.
 #   vhs docs/demo.tape   (run from the repo root)
+# VHS can't send some keys (Alt+Shift+arrows, End), so those are typed as raw
+# escape sequences with Type@0ms.
 Output docs/demo.gif
 
 Set Shell bash
@@ -24,31 +26,46 @@ Type "Shopping list" Enter Tab
 Type "milk" Enter
 Type "eggs" Enter
 Type "coffee"
-Sleep 800ms
+Sleep 600ms
 
 Ctrl+T
-Sleep 500ms
+Sleep 400ms
 Type "Project ideas" Enter Tab
 Type "terminal pomodoro timer" Enter
 Type "notes sync over git"
-Sleep 600ms
+Sleep 800ms
 
-# Alt+1, sent as a raw escape sequence (VHS allows Alt only with letters)
-Type@0ms "1"
-Sleep 1s
-# Alt+2, then Up and End (raw, VHS has no End key) to leave the cursor mid-note
-Type@0ms "2"
-Sleep 600ms
+# Find across notes: jumps back to the shopping list
+Ctrl+F
+Sleep 500ms
+Type "eggs"
+Sleep 1.5s
+Escape
+Sleep 500ms
+
+# Alt+Shift+Right moves the note one place right
+Type@0ms "[1;4C"
+Sleep 1.2s
+
+# Delete it, then Ctrl+Z brings it back
+Ctrl+W
+Sleep 1.2s
+Type "y"
+Sleep 1.5s
+Ctrl+Z
+Sleep 1.5s
+
+# Leave the cursor at the end of "eggs" (End) and quit
+Down
 Up
 Type@0ms "[F"
-Sleep 1s
-
+Sleep 800ms
 Ctrl+Q
 Sleep 1.5s
 
 Type "cool-notes --file notes.txt" Sleep 300ms Enter
 Sleep 1.8s
-Type " (in Go)"
+Type " (a dozen)"
 Sleep 2.5s
 
 Hide

@@ -65,6 +65,16 @@ wait-for deleted “Third”
 assert note 2/2
 capture after-delete
 
+# Ctrl+Z right after deleting brings the note back, then delete it again
+key ctrl+z
+wait-for restored “Third”
+assert note 3/3
+assert Third
+key ctrl+w
+wait-for Delete this note?
+key y
+wait-for note 2/2
+
 # Help overlay
 key f1
 wait-for next / previous theme
@@ -89,6 +99,27 @@ key ctrl+w
 wait-for Delete this note?
 key y
 wait-for note 2/2
+click 5,1
+assert │   MILK
+
+# Find across notes: jumps to the match in another note and selects it
+key ctrl+f
+wait-for type to search all notes
+type SECOND
+wait-for 1/1
+assert note 2/2
+assert-style 5,3,6 bg=#45475a
+capture find
+key esc
+wait-gone Enter next
+assert F1  help
+
+# Move the note left and back; the file order follows
+key alt+shift+left
+assert note 1/2
+assert-style text=" Second " bold bg=#cba6f7
+key alt+shift+right
+assert note 2/2
 click 5,1
 assert │   MILK
 

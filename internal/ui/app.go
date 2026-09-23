@@ -113,6 +113,17 @@ type Model struct {
 	flash    string
 	flashID  int
 	flashErr bool
+
+	deleted *deletedTab // last deleted note, restorable with Ctrl+Z until the next key
+
+	search *search // non-nil while the find bar is open
+}
+
+// deletedTab remembers a deleted note so it can be put back.
+type deletedTab struct {
+	t           *tab
+	idx         int
+	placeholder bool // deleting the last note added an empty one in its place
 }
 
 // New builds the model. If no notes file is known yet it starts in setup.
@@ -308,6 +319,8 @@ func (m *Model) applyExternal(ext *store.External) tea.Cmd {
 	m.tabs = m.tabs[:len(notes)]
 	m.active = clampInt(m.active, 0, len(m.tabs)-1)
 	m.modal = modalNone
+	m.deleted = nil
+	m.search = nil
 	m.layout()
 	return m.setFlash("reloaded: file changed on disk", false)
 }
@@ -344,16 +357,44 @@ func (m *Model) closeTab(i int) tea.Cmd {
 		return nil
 	}
 	title := tabTitle(m.tabs[i].ed.Text())
+	m.deleted = &deletedTab{t: m.tabs[i], idx: i}
 	m.tabs = append(m.tabs[:i], m.tabs[i+1:]...)
 	if len(m.tabs) == 0 {
 		m.tabs = append(m.tabs, m.newTab(""))
+		m.deleted.placeholder = true
 	}
 	if m.active > i || m.active >= len(m.tabs) {
 		m.active--
 	}
 	m.active = clampInt(m.active, 0, len(m.tabs)-1)
 	m.layout()
-	return tea.Batch(m.saveNow(), m.setFlash("deleted “"+title+"”", false))
+	return tea.Batch(m.saveNow(), m.setFlash("deleted “"+title+"”  ·  Ctrl+Z to restore", false))
+}
+
+// restoreTab puts back the last deleted note where it was.
+func (m *Model) restoreTab() tea.Cmd {
+	d := m.deleted
+	m.deleted = nil
+	if d.placeholder && len(m.tabs) == 1 && m.tabs[0].ed.Text() == "" {
+		m.tabs = m.tabs[:0]
+	}
+	i := clampInt(d.idx, 0, len(m.tabs))
+	m.tabs = append(m.tabs[:i], append([]*tab{d.t}, m.tabs[i:]...)...)
+	m.active = i
+	m.layout()
+	return tea.Batch(m.saveNow(), m.setFlash("restored “"+tabTitle(d.t.ed.Text())+"”", false))
+}
+
+// moveTab moves the active note one place left (-1) or right (+1).
+func (m *Model) moveTab(delta int) tea.Cmd {
+	j := m.active + delta
+	if j < 0 || j >= len(m.tabs) {
+		return nil
+	}
+	m.tabs[m.active], m.tabs[j] = m.tabs[j], m.tabs[m.active]
+	m.active = j
+	m.layout()
+	return m.saveNow()
 }
 
 func (m *Model) switchTab(i int) {
@@ -500,6 +541,11 @@ func (m *Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyPressMsg:
 		return m, m.handleKey(msg)
 	case tea.PasteMsg:
+		m.deleted = nil
+		if m.search != nil {
+			m.search.query.InsertText(msg.Content)
+			return m, m.searchUpdated()
+		}
 		if m.modal == modalNone {
 			return m, m.edit(func(e *editor.Editor) { e.InsertText(msg.Content) })
 		}
@@ -543,6 +589,13 @@ func (m *Model) handleKey(msg tea.KeyPressMsg) tea.Cmd {
 	if ks == "ctrl+q" {
 		return m.quit()
 	}
+	if ks == "ctrl+z" && m.deleted != nil && m.modal == modalNone && m.search == nil {
+		return m.restoreTab()
+	}
+	m.deleted = nil
+	if m.search != nil && m.modal == modalNone {
+		return m.searchKey(msg)
+	}
 	switch m.modal {
 	case modalHelp:
 		m.modal = modalNone
@@ -579,6 +632,12 @@ func (m *Model) handleKey(msg tea.KeyPressMsg) tea.Cmd {
 		}
 	case "alt+9":
 		m.switchTab(len(m.tabs) - 1)
+	case "alt+shift+left", "ctrl+shift+pgup":
+		return m.moveTab(-1)
+	case "alt+shift+right", "ctrl+shift+pgdown":
+		return m.moveTab(1)
+	case "ctrl+f":
+		m.openSearch()
 	case "f1":
 		m.modal = modalHelp
 	case "f2", "shift+f2":
@@ -684,6 +743,9 @@ func (m *Model) handleClick(mo tea.Mouse) tea.Cmd {
 	}
 
 	if h, ok := findHit(m.hits, mo.X, mo.Y); ok {
+		if m.search != nil && h.kind != hitAction {
+			m.search = nil
+		}
 		switch {
 		case h.kind == hitAction:
 			return m.runAction(action(h.idx))
@@ -701,6 +763,7 @@ func (m *Model) handleClick(mo tea.Mouse) tea.Cmd {
 	if mo.Button != tea.MouseLeft || mo.Y < ey || mo.Y >= ey+eh {
 		return nil
 	}
+	m.search = nil
 	x, y := min(mo.X-ex, ew), mo.Y-ey
 	now := time.Now()
 	if now.Sub(m.lastClick) < multiClickGap && mo.X == m.lastClickX && mo.Y == m.lastClickY {

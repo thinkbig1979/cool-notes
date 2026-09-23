@@ -31,3 +31,40 @@ checksum:
 
 changelog:
   sort: asc
+
+# Homebrew cask (macOS, Linux): brew install thinkbig1979/tap/cool-notes
+homebrew_casks:
+  - repository:
+      owner: thinkbig1979
+      name: homebrew-tap
+      git:
+        url: git@github.com:thinkbig1979/homebrew-tap.git
+        private_key: "{{ .Env.HOMEBREW_TAP_DEPLOY_KEY }}"
+    homepage: https://github.com/thinkbig1979/cool-notes
+    description: Tabbed note editor for the terminal that keeps every note in one plain-text file
+    license: MIT
+    commit_author:
+      name: cool-notes release
+      email: noreply@github.com
+    # The binary isn't signed or notarized, so clear macOS's quarantine flag.
+    hooks:
+      post:
+        install: |
+          if OS.mac?
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/cool-notes"]
+          end
+
+# Scoop (Windows): scoop bucket add thinkbig1979 https://github.com/thinkbig1979/scoop-bucket
+scoops:
+  - repository:
+      owner: thinkbig1979
+      name: scoop-bucket
+      git:
+        url: git@github.com:thinkbig1979/scoop-bucket.git
+        private_key: "{{ .Env.SCOOP_BUCKET_DEPLOY_KEY }}"
+    homepage: https://github.com/thinkbig1979/cool-notes
+    description: Tabbed note editor for the terminal that keeps every note in one plain-text file
+    license: MIT
+    commit_author:
+      name: cool-notes release
+      email: noreply@github.com
