@@ -8,11 +8,27 @@ open that file in any other editor. Changes save as you type.
 
 ![cool-notes demo: writing notes in tabs, quitting, and reopening where you left off](docs/demo.gif)
 
+## Install
+
+Download the archive for your platform from the
+[releases page](https://github.com/thinkbig1979/cool-notes/releases), unpack it,
+and put `cool-notes` on your `PATH`. Builds are available for Linux, macOS and
+Windows on amd64 and arm64. Or build from source with Go 1.25+:
+
 ```
-go build -o cool-notes .
-./cool-notes                   # first run asks where to keep your notes
-./cool-notes --file notes.txt  # open a specific file
+go install github.com/thinkbig1979/cool-notes@latest
 ```
+
+## Run
+
+```
+cool-notes                   # first run asks where to keep your notes
+cool-notes --file notes.txt  # open a specific file
+cool-notes --version
+```
+
+Pushing a `v*` tag builds the release binaries through GitHub Actions and
+GoReleaser (`.goreleaser.yaml`).
 
 ## Keys
 

@@ -15,14 +15,22 @@ import (
 	"github.com/thinkbig1979/cool-notes/internal/ui"
 )
 
+// version is set at release time with -ldflags "-X main.version=...".
+var version = "dev"
+
 func main() {
 	file := flag.String("file", "", "notes file to open (overrides the configured one)")
+	showVersion := flag.Bool("version", false, "print the version and exit")
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "usage: cool-notes [--file path]\n\n")
+		fmt.Fprintf(os.Stderr, "usage: cool-notes [--file path] [--version]\n\n")
 		flag.PrintDefaults()
 		fmt.Fprintf(os.Stderr, "\nSettings live in $XDG_CONFIG_HOME/cool-notes (override with COOL_NOTES_CONFIG_DIR).\n")
 	}
 	flag.Parse()
+	if *showVersion {
+		fmt.Println("cool-notes", version)
+		return
+	}
 	if err := run(*file); err != nil {
 		fmt.Fprintln(os.Stderr, "cool-notes:", err)
 		os.Exit(1)
