@@ -251,3 +251,40 @@ func TestCustomThemeExtendsBuiltin(t *testing.T) {
 		t.Fatalf("problems = %v", problems)
 	}
 }
+
+func TestHotkeyBarClicksAndNarrowWidths(t *testing.T) {
+	m := newTestModel(t, "one")
+	m.View()
+	var newHint *hit
+	for i, h := range m.hits {
+		if h.kind == hitAction && action(h.idx) == actNew {
+			newHint = &m.hits[i]
+		}
+	}
+	if newHint == nil || newHint.y != m.height-2 {
+		t.Fatalf("no ^T hint on the hotkey row: %+v", m.hits)
+	}
+	m.Update(tea.MouseClickMsg{X: newHint.x0, Y: newHint.y, Button: tea.MouseLeft})
+	if len(m.tabs) != 2 {
+		t.Fatalf("clicking ^T hint: tabs = %d", len(m.tabs))
+	}
+
+	// Copy and cut only appear with a selection.
+	if row := m.viewHints(0); strings.Contains(row, "copy") {
+		t.Fatal("copy shown without selection")
+	}
+	press(m, "abc")
+	m.ed().SelectAll()
+	if row := m.viewHints(0); !strings.Contains(row, "copy") || !strings.Contains(row, "cut") {
+		t.Fatalf("selection hints missing: %q", row)
+	}
+
+	// Narrow terminals drop hints but always keep help.
+	for _, w := range []int{20, 30, 40, 60, 80, 120} {
+		m.Update(tea.WindowSizeMsg{Width: w, Height: 10})
+		row := m.viewHints(0)
+		if lipgloss.Width(row) != w || !strings.Contains(row, "help") {
+			t.Errorf("width %d: %q", w, row)
+		}
+	}
+}

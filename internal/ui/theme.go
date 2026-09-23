@@ -214,6 +214,7 @@ type styles struct {
 	dialog, dialogTitle, dialogText, dialogMuted                 lipgloss.Style
 	button, buttonFocus, dangerFocus                             lipgloss.Style
 	input                                                        lipgloss.Style
+	hintKey, hintLabel                                           lipgloss.Style
 }
 
 func newStyles(t Theme) styles {
@@ -251,6 +252,8 @@ func newStyles(t Theme) styles {
 		button:      lipgloss.NewStyle().Background(col(t.Tab)).Foreground(col(t.TabText)).Padding(0, 2),
 		buttonFocus: lipgloss.NewStyle().Background(col(t.Accent)).Foreground(col(t.AccentText)).Bold(true).Padding(0, 2),
 		dangerFocus: lipgloss.NewStyle().Background(col(t.Danger)).Foreground(col(t.AccentText)).Bold(true).Padding(0, 2),
+		hintKey:     lipgloss.NewStyle().Background(col(t.Tab)).Foreground(col(t.Accent)).Bold(true),
+		hintLabel:   lipgloss.NewStyle().Foreground(col(t.Muted)),
 		input: lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(col(t.Accent)).

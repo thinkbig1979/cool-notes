@@ -73,6 +73,18 @@ assert-style 3,2,9 bg=default
 type MILK
 assert │   MILK
 
+# Hotkey bar: shows the main keys, and clicking ^T adds a note
+assert-style text=" ^T " bold bg=#313244
+assert F1  help
+click 2,22
+wait-for note 3/3
+key ctrl+w
+wait-for Delete this note?
+key y
+wait-for note 2/2
+click 3,0
+assert │   MILK
+
 # Resize reflows without losing content
 resize 50x12
 assert │   MILK

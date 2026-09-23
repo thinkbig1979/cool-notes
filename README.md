@@ -26,6 +26,10 @@ go build -o cool-note .
 | `F1` | Help |
 | `Ctrl+Q` | Quit |
 
+A hotkey bar above the status line shows the main keys and adapts to the
+terminal width (copy and cut appear while text is selected). Click a hint to
+run it.
+
 Mouse: click a tab to open it, `×` to delete it (middle-click works too), `+`
 for a new note. In the text, click to place the cursor, drag to select,
 double-click for a word, triple-click for a line, wheel to scroll. Wheel over the

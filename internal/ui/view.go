@@ -69,7 +69,7 @@ func (m *Model) viewNotes() (string, *tea.Cursor) {
 	for len(lines) < m.height-statusRows {
 		lines = append(lines, strings.Repeat(" ", m.width))
 	}
-	lines = append(lines[:max(0, m.height-statusRows)], m.viewStatus())
+	lines = append(lines[:max(0, m.height-statusRows)], m.viewHints(m.height-2), m.viewStatus())
 	base := strings.Join(lines, "\n")
 
 	var cursor *tea.Cursor
@@ -192,9 +192,7 @@ func (m *Model) viewStatus() string {
 	c := m.ed().Cursor()
 	right := st.status.Render(fmt.Sprintf("Ln %d, Col %d", c.Row+1, c.Col+1)) +
 		st.statusMuted.Render("  ·  ") +
-		st.status.Render(fmt.Sprintf("note %d/%d", m.active+1, len(m.tabs))) +
-		st.statusMuted.Render("  ·  ") +
-		st.statusKey.Render("F1") + st.statusMuted.Render(" help ")
+		st.status.Render(fmt.Sprintf("note %d/%d ", m.active+1, len(m.tabs)))
 	rw := lipgloss.Width(right)
 	if rw+10 > m.width {
 		right, rw = "", 0

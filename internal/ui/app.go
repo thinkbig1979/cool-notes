@@ -375,7 +375,7 @@ func tabTitle(body string) string {
 
 const (
 	tabBarRows = 2 // tab bar plus a spacer line
-	statusRows = 1
+	statusRows = 2 // hotkey bar plus status line
 )
 
 // editorRect is the editor's area on screen.
@@ -619,6 +619,7 @@ const (
 	hitNext
 	hitConfirm
 	hitCancel
+	hitAction // hotkey bar entry; idx is the action
 )
 
 // hit is a clickable region on one screen row.
@@ -656,6 +657,8 @@ func (m *Model) handleClick(mo tea.Mouse) tea.Cmd {
 
 	if h, ok := findHit(m.hits, mo.X, mo.Y); ok {
 		switch {
+		case h.kind == hitAction:
+			return m.runAction(action(h.idx))
 		case h.kind == hitNew:
 			return m.addTab()
 		case h.kind == hitClose || (h.kind == hitTab && mo.Button == tea.MouseMiddle):
