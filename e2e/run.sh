@@ -11,3 +11,7 @@ go build -o "$tmp/cool-note" .
 	-script e2e/smoke.script -- "$tmp/cool-note" --file "$tmp/notes.txt"
 echo "--- notes file"
 cat "$tmp/notes.txt"
+echo "--- light terminal and theme switching"
+"$TG" -quiet -delay 800ms -bg '#eff1f5' -env COOL_NOTE_CONFIG_DIR="$tmp/cfg-light" \
+	-script e2e/light.script -- "$tmp/cool-note" --file "$tmp/light.txt"
+echo "ok"

@@ -1,0 +1,12 @@
+# Run against a light terminal background (-bg '#eff1f5' in e2e/run.sh).
+wait-for Start typing
+type Light
+# auto picks catppuccin-latte on a light background
+assert-style text=" Light " bold bg=#8839ef
+# F2 cycles: auto -> catppuccin-mocha -> catppuccin-latte -> nord
+key f2 f2 f2
+wait-for theme: nord
+assert-style text=" Light " bold bg=#88c0d0
+key shift+f2
+wait-for theme: catppuccin-latte
+assert-style text=" Light " bold bg=#8839ef

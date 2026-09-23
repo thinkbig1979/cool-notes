@@ -1,4 +1,5 @@
 # End-to-end smoke test for cool-note. Run with e2e/run.sh.
+# Colors are catppuccin-mocha: auto theme on the default black background.
 wait-for Start typing
 
 # Typing, Tab indentation and auto-indent
@@ -11,6 +12,9 @@ key enter shift+tab
 type Done
 assert Groceries ×
 assert │   eggs
+# Active tab uses the accent; indent guides are dim
+assert-style text=" Groceries " bold bg=#cba6f7
+assert-style 3,3 fg=#313244
 capture first-note
 
 # New tab via keyboard, then via mouse on the + button
@@ -21,6 +25,9 @@ assert note 2/2
 click 27,0
 wait-for note 3/3
 type Third
+# Inactive tabs lose the accent
+assert-style text=" Groceries " !bold bg=#313244
+assert-style text=" Third " bold bg=#cba6f7
 capture three-tabs
 
 # Switch tabs by keyboard and by clicking a tab
@@ -39,6 +46,13 @@ assert note 1/3
 key alt+9
 key ctrl+w
 wait-for “Third” will be removed
+# Delete is focused by default (danger color); arrows move focus to Cancel
+assert-style text="Delete  " bg=#f38ba8
+key right
+assert-style text=Cancel bold bg=#cba6f7
+assert-style text="Delete  " bg=#313244
+key left
+assert-style text="Delete  " bg=#f38ba8
 key y
 wait-for deleted “Third”
 assert note 2/2
@@ -53,6 +67,9 @@ wait-gone next / previous theme
 # Mouse selection: double-click a word and replace it
 click 3,0
 dblclick 8,3
+# The selected word is highlighted, the rest of the line is not
+assert-style 7,3,4 bg=#45475a
+assert-style 3,2,9 bg=default
 type MILK
 assert │   MILK
 
