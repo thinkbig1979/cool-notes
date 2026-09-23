@@ -6,12 +6,12 @@ cd "$(dirname "$0")/.."
 TG=${TG:-$(command -v tui-goggles || echo ~/.claude/skills/tui-capture/bin/tui-goggles)}
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
-go build -o "$tmp/cool-note" .
-"$TG" -trim -delay 800ms -env COOL_NOTE_CONFIG_DIR="$tmp/cfg" \
-	-script e2e/smoke.script -- "$tmp/cool-note" --file "$tmp/notes.txt"
+go build -o "$tmp/cool-notes" .
+"$TG" -trim -delay 800ms -env COOL_NOTES_CONFIG_DIR="$tmp/cfg" \
+	-script e2e/smoke.script -- "$tmp/cool-notes" --file "$tmp/notes.txt"
 echo "--- notes file"
 cat "$tmp/notes.txt"
 echo "--- light terminal and theme switching"
-"$TG" -quiet -delay 800ms -bg '#eff1f5' -env COOL_NOTE_CONFIG_DIR="$tmp/cfg-light" \
-	-script e2e/light.script -- "$tmp/cool-note" --file "$tmp/light.txt"
+"$TG" -quiet -delay 800ms -bg '#eff1f5' -env COOL_NOTES_CONFIG_DIR="$tmp/cfg-light" \
+	-script e2e/light.script -- "$tmp/cool-notes" --file "$tmp/light.txt"
 echo "ok"

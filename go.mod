@@ -1,4 +1,4 @@
-module cool-note
+module github.com/thinkbig1979/cool-notes
 
 go 1.25.0
 

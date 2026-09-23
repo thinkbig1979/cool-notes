@@ -1,4 +1,4 @@
-# End-to-end smoke test for cool-note. Run with e2e/run.sh.
+# End-to-end smoke test for cool-notes. Run with e2e/run.sh.
 # Colors are catppuccin-mocha: auto theme on the default black background.
 wait-for Start typing
 # 1-row, 2-column margin around the app; readable muted placeholder

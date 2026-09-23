@@ -30,28 +30,41 @@ type State struct {
 	Cursors []Cursor `json:"cursors"`
 }
 
-// Dir returns the config directory. COOL_NOTE_CONFIG_DIR overrides it.
+// Dir returns the config directory. COOL_NOTES_CONFIG_DIR overrides it.
 func Dir() (string, error) {
-	if d := os.Getenv("COOL_NOTE_CONFIG_DIR"); d != "" {
+	if d := os.Getenv("COOL_NOTES_CONFIG_DIR"); d != "" {
 		return d, nil
 	}
 	base, err := os.UserConfigDir()
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(base, "cool-note"), nil
+	dir := filepath.Join(base, "cool-notes")
+	migrate(filepath.Join(base, "cool-note"), dir)
+	return dir, nil
+}
+
+// migrate moves settings from the app's old name (cool-note) to the new
+// one, once. If both exist, the new one wins and the old one is left alone.
+func migrate(oldDir, newDir string) {
+	if _, err := os.Stat(newDir); err == nil {
+		return
+	}
+	if info, err := os.Stat(oldDir); err == nil && info.IsDir() {
+		os.Rename(oldDir, newDir)
+	}
 }
 
 // DefaultNotesPath is suggested on first run.
 func DefaultNotesPath() string {
 	if d := os.Getenv("XDG_DATA_HOME"); d != "" {
-		return filepath.Join(d, "cool-note", "notes.txt")
+		return filepath.Join(d, "cool-notes", "notes.txt")
 	}
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "notes.txt"
 	}
-	return filepath.Join(home, ".local", "share", "cool-note", "notes.txt")
+	return filepath.Join(home, ".local", "share", "cool-notes", "notes.txt")
 }
 
 // ExpandPath resolves a leading ~ and makes path absolute.

@@ -9,8 +9,8 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 
-	"cool-note/internal/config"
-	"cool-note/internal/editor"
+	"github.com/thinkbig1979/cool-notes/internal/config"
+	"github.com/thinkbig1979/cool-notes/internal/editor"
 )
 
 const tabTitleMax = 22
@@ -19,12 +19,12 @@ const tabTitleMax = 22
 func (m *Model) View() tea.View {
 	var content string
 	var cursor *tea.Cursor
-	title := "cool-note"
+	title := "cool-notes"
 	if m.mode == modeSetup {
 		content, cursor = m.viewSetup()
 	} else {
 		content, cursor = m.viewNotes()
-		title = tabTitle(m.ed().Text()) + " · cool-note"
+		title = tabTitle(m.ed().Text()) + " · cool-notes"
 	}
 	v := tea.NewView(m.addMargin(content))
 	v.AltScreen = true
@@ -362,7 +362,7 @@ func (m *Model) viewSetup() (string, *tea.Cursor) {
 		errLine = lipgloss.NewStyle().Foreground(col(st.theme.Danger)).Render("✗ " + m.setupErr)
 	}
 	parts := []string{
-		accent.Render("cool-note"),
+		accent.Render("cool-notes"),
 		"",
 		text.Render("Where should your notes be stored?"),
 		muted.Render("All notes live in this one plain-text file. You can edit it in any editor."),

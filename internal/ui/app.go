@@ -1,4 +1,4 @@
-// Package ui is the cool-note terminal interface.
+// Package ui is the cool-notes terminal interface.
 package ui
 
 import (
@@ -8,9 +8,9 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
-	"cool-note/internal/config"
-	"cool-note/internal/editor"
-	"cool-note/internal/store"
+	"github.com/thinkbig1979/cool-notes/internal/config"
+	"github.com/thinkbig1979/cool-notes/internal/editor"
+	"github.com/thinkbig1979/cool-notes/internal/store"
 )
 
 const (

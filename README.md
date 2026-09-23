@@ -1,12 +1,12 @@
-# cool-note
+# cool-notes
 
 A tabbed note editor for the terminal. Every note lives in one plain-text file
 that you can open in any other editor. Changes save as you type.
 
 ```
-go build -o cool-note .
-./cool-note                   # first run asks where to keep your notes
-./cool-note --file notes.txt  # open a specific file
+go build -o cool-notes .
+./cool-notes                   # first run asks where to keep your notes
+./cool-notes --file notes.txt  # open a specific file
 ```
 
 ## Keys
@@ -50,24 +50,24 @@ Project ideas
 - A separator is a line of three or more `=`, a space, `note`, an optional
   `: title`, a space, and three or more `=`. Trailing whitespace and Windows
   line endings are fine.
-- The title is cosmetic. cool-note rewrites it from the note's first line on
+- The title is cosmetic. cool-notes rewrites it from the note's first line on
   every save and ignores it when reading.
 - A line that doesn't match exactly, such as a damaged separator, is ordinary
   text in the note above it. Text above the first separator becomes a note.
 - To add a note by hand, type a separator line (`=== note ===` is enough).
-- If a note contains a line that looks like a separator, cool-note writes it
+- If a note contains a line that looks like a separator, cool-notes writes it
   with a leading `\` so it can't split the note, and removes it when reading.
 - Writes are atomic (temp file, fsync, rename), so a crash never leaves a
   half-written file.
 
-While cool-note is open it watches the file. If another program changes it, the
+While cool-notes is open it watches the file. If another program changes it, the
 notes reload. If you have edits that haven't been written yet, yours are kept
 and the other version is saved next to the file as
 `notes.txt.conflict-<time>.bak`.
 
 ## Settings and themes
 
-Settings live in `~/.config/cool-note/` (override with `COOL_NOTE_CONFIG_DIR`):
+Settings live in `~/.config/cool-notes/` (override with `COOL_NOTES_CONFIG_DIR`):
 
 - `config.json`: `file` (notes path) and `theme`. Delete `file` to see the
   first-run prompt again.
@@ -78,7 +78,7 @@ Built-in themes: `auto` (follows the terminal's light or dark background),
 `catppuccin-mocha`, `catppuccin-latte`, `nord`, `gruvbox-dark`, `tokyo-night`,
 `rose-pine-dawn`, and `terminal`, which uses your terminal's own 16 colors.
 
-Add your own as `~/.config/cool-note/themes/<name>.json`. Any field you leave
+Add your own as `~/.config/cool-notes/themes/<name>.json`. Any field you leave
 out comes from the theme named in `extends`:
 
 ```json

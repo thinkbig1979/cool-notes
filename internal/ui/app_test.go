@@ -11,8 +11,8 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 
-	"cool-note/internal/config"
-	"cool-note/internal/store"
+	"github.com/thinkbig1979/cool-notes/internal/config"
+	"github.com/thinkbig1979/cool-notes/internal/store"
 )
 
 func newTestModel(t *testing.T, notes ...string) *Model {

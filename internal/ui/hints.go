@@ -6,7 +6,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 
-	"cool-note/internal/editor"
+	"github.com/thinkbig1979/cool-notes/internal/editor"
 )
 
 type action int

@@ -1,4 +1,4 @@
-// cool-note is a tabbed terminal note editor that keeps every note in one
+// cool-notes is a tabbed terminal note editor that keeps every note in one
 // plain-text file and saves as you type.
 package main
 
@@ -11,20 +11,20 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
-	"cool-note/internal/config"
-	"cool-note/internal/ui"
+	"github.com/thinkbig1979/cool-notes/internal/config"
+	"github.com/thinkbig1979/cool-notes/internal/ui"
 )
 
 func main() {
 	file := flag.String("file", "", "notes file to open (overrides the configured one)")
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "usage: cool-note [--file path]\n\n")
+		fmt.Fprintf(os.Stderr, "usage: cool-notes [--file path]\n\n")
 		flag.PrintDefaults()
-		fmt.Fprintf(os.Stderr, "\nSettings live in $XDG_CONFIG_HOME/cool-note (override with COOL_NOTE_CONFIG_DIR).\n")
+		fmt.Fprintf(os.Stderr, "\nSettings live in $XDG_CONFIG_HOME/cool-notes (override with COOL_NOTES_CONFIG_DIR).\n")
 	}
 	flag.Parse()
 	if err := run(*file); err != nil {
-		fmt.Fprintln(os.Stderr, "cool-note:", err)
+		fmt.Fprintln(os.Stderr, "cool-notes:", err)
 		os.Exit(1)
 	}
 }
