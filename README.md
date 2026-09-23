@@ -10,10 +10,52 @@ open that file in any other editor. Changes save as you type.
 
 ## Install
 
-Download the archive for your platform from the
-[releases page](https://github.com/thinkbig1979/cool-notes/releases), unpack it,
-and put `cool-notes` on your `PATH`. Builds are available for Linux, macOS and
-Windows on amd64 and arm64. Or build from source with Go 1.25+:
+Prebuilt binaries are on the
+[releases page](https://github.com/thinkbig1979/cool-notes/releases) for Linux,
+macOS and Windows, on both amd64 (Intel/AMD) and arm64 (Apple Silicon, ARM).
+The commands below download the latest release for your machine.
+
+### Linux and macOS
+
+```sh
+os=$(uname -s | tr '[:upper:]' '[:lower:]')
+arch=$(uname -m); case $arch in x86_64) arch=amd64 ;; aarch64|arm64) arch=arm64 ;; esac
+mkdir -p ~/.local/bin
+curl -fsSL "https://github.com/thinkbig1979/cool-notes/releases/latest/download/cool-notes_${os}_${arch}.tar.gz" \
+  | tar -xz -C ~/.local/bin cool-notes
+```
+
+This installs to `~/.local/bin`, which most Linux distributions already have on
+`PATH`. On macOS it usually isn't, so add it once:
+
+```sh
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc && source ~/.zshrc
+```
+
+If you download the archive in a browser instead, macOS blocks the unsigned
+binary on first run. Clear the flag with
+`xattr -d com.apple.quarantine ~/.local/bin/cool-notes`.
+
+### Windows
+
+In PowerShell:
+
+```powershell
+$arch = if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { 'arm64' } else { 'amd64' }
+$dir = "$env:LOCALAPPDATA\Programs\cool-notes"
+New-Item -ItemType Directory -Force $dir | Out-Null
+Invoke-WebRequest "https://github.com/thinkbig1979/cool-notes/releases/latest/download/cool-notes_windows_$arch.zip" -OutFile "$env:TEMP\cool-notes.zip"
+Expand-Archive "$env:TEMP\cool-notes.zip" $dir -Force
+$userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
+if ($userPath -notlike "*$dir*") { [Environment]::SetEnvironmentVariable('Path', "$userPath;$dir", 'User') }
+```
+
+Open a new terminal afterwards so the updated `PATH` applies. Use Windows
+Terminal: the older console host doesn't handle all of the key combinations.
+
+### From source
+
+With Go 1.25 or later, on any platform:
 
 ```
 go install github.com/thinkbig1979/cool-notes@latest
@@ -26,9 +68,6 @@ cool-notes                   # first run asks where to keep your notes
 cool-notes --file notes.txt  # open a specific file
 cool-notes --version
 ```
-
-Pushing a `v*` tag builds the release binaries through GitHub Actions and
-GoReleaser (`.goreleaser.yaml`).
 
 ## Keys
 
@@ -88,10 +127,19 @@ and the other version is saved next to the file as
 
 ## Settings and themes
 
-Settings live in `~/.config/cool-notes/`. To use a different folder, set the
-`COOL_NOTES_CONFIG_DIR` environment variable when you start the app, for example
-`COOL_NOTES_CONFIG_DIR=~/my-settings ./cool-notes`, or export it from your shell
-profile. The folder holds:
+Settings live in a `cool-notes` folder in your system's config directory:
+
+| OS | Folder |
+|---|---|
+| Linux | `~/.config/cool-notes/` (or `$XDG_CONFIG_HOME/cool-notes/`) |
+| macOS | `~/Library/Application Support/cool-notes/` |
+| Windows | `%AppData%\cool-notes\` |
+
+To use a different folder, set the `COOL_NOTES_CONFIG_DIR` environment
+variable when you start the app, for example
+`COOL_NOTES_CONFIG_DIR=~/my-settings cool-notes` (Linux, macOS) or
+`$env:COOL_NOTES_CONFIG_DIR = "$HOME\my-settings"; cool-notes` (PowerShell), or
+set it in your shell profile. The folder holds:
 
 - `config.json`: `file` (notes path) and `theme`. Delete `file` to see the
   first-run prompt again.
@@ -102,7 +150,7 @@ Built-in themes: `auto` (follows the terminal's light or dark background),
 `catppuccin-mocha`, `catppuccin-latte`, `nord`, `gruvbox-dark`, `tokyo-night`,
 `rose-pine-dawn`, and `terminal`, which uses your terminal's own 16 colors.
 
-Add your own as `~/.config/cool-notes/themes/<name>.json`. Any field you leave
+Add your own as `themes/<name>.json` inside the settings folder. Any field you leave
 out comes from the theme named in `extends`:
 
 ```json
@@ -123,4 +171,13 @@ color number (`"0"`–`"255"`), or `""` for the terminal default.
 ```
 go test ./...     # unit tests: file format, editor, app model
 e2e/run.sh        # drives the real app in a virtual terminal with tui-goggles
+```
+
+## Releasing
+
+Pushing a `v*` tag runs GoReleaser (`.goreleaser.yaml`) in GitHub Actions, which
+tests, builds and publishes the binaries:
+
+```sh
+git tag -a v0.2.0 -m "cool-notes v0.2.0" && git push origin v0.2.0
 ```
