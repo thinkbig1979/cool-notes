@@ -58,6 +58,12 @@ func press(m *Model, keys ...string) {
 	}
 }
 
+// clickAt clicks a cell given in app coordinates, converting it to the
+// terminal coordinates a real click would report.
+func clickAt(m *Model, x, y int) {
+	m.Update(tea.MouseClickMsg{X: x + m.mx, Y: y + m.my, Button: tea.MouseLeft})
+}
+
 func fileNotes(t *testing.T, m *Model) []string {
 	t.Helper()
 	data, err := os.ReadFile(m.file.Path)
@@ -214,7 +220,7 @@ func TestTabBarOverflowKeepsActiveVisible(t *testing.T) {
 	// Clicking the › arrow reveals the next hidden tab.
 	for _, h := range m.hits {
 		if h.kind == hitNext {
-			m.Update(tea.MouseClickMsg{X: h.x0, Y: 0, Button: tea.MouseLeft})
+			clickAt(m, h.x0, h.y)
 		}
 	}
 	if m.active == 0 {
@@ -264,7 +270,7 @@ func TestHotkeyBarClicksAndNarrowWidths(t *testing.T) {
 	if newHint == nil || newHint.y != m.height-2 {
 		t.Fatalf("no ^T hint on the hotkey row: %+v", m.hits)
 	}
-	m.Update(tea.MouseClickMsg{X: newHint.x0, Y: newHint.y, Button: tea.MouseLeft})
+	clickAt(m, newHint.x0, newHint.y)
 	if len(m.tabs) != 2 {
 		t.Fatalf("clicking ^T hint: tabs = %d", len(m.tabs))
 	}
@@ -286,5 +292,31 @@ func TestHotkeyBarClicksAndNarrowWidths(t *testing.T) {
 		if lipgloss.Width(row) != w || !strings.Contains(row, "help") {
 			t.Errorf("width %d: %q", w, row)
 		}
+	}
+}
+
+func TestMarginInsetsAppAndShiftsInput(t *testing.T) {
+	m := newTestModel(t, "one")
+	m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	v := m.View()
+	lines := strings.Split(v.Content, "\n")
+	if len(lines) != 24 || strings.TrimSpace(lines[0]) != "" || strings.TrimSpace(lines[23]) != "" {
+		t.Fatalf("expected blank first and last rows")
+	}
+	if !strings.HasPrefix(lines[1], "  ") || strings.TrimSpace(lines[1][:2]) != "" {
+		t.Fatalf("expected left margin: %q", lines[1])
+	}
+	if v.Cursor == nil || v.Cursor.X < m.mx || v.Cursor.Y < m.my {
+		t.Fatalf("cursor not shifted into the margin: %+v", v.Cursor)
+	}
+	// A click on the terminal's top-left corner is in the margin: no effect.
+	m.Update(tea.MouseClickMsg{X: 0, Y: 0, Button: tea.MouseLeft})
+	if len(m.tabs) != 1 || m.modal != modalNone {
+		t.Fatal("click in margin did something")
+	}
+	// Small terminals drop the margin.
+	m.Update(tea.WindowSizeMsg{Width: 30, Height: 8})
+	if m.mx != 0 || m.my != 0 || m.width != 30 {
+		t.Fatalf("margin on small terminal: %d %d %d", m.mx, m.my, m.width)
 	}
 }

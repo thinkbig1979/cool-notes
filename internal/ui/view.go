@@ -26,16 +26,39 @@ func (m *Model) View() tea.View {
 		content, cursor = m.viewNotes()
 		title = tabTitle(m.ed().Text()) + " · cool-note"
 	}
-	v := tea.NewView(content)
+	v := tea.NewView(m.addMargin(content))
 	v.AltScreen = true
 	v.MouseMode = tea.MouseModeCellMotion
 	v.WindowTitle = title
 	if cursor != nil {
+		cursor.X += m.mx
+		cursor.Y += m.my
 		cursor.Shape = tea.CursorBar
 		cursor.Color = col(m.st.theme.Accent)
 		v.Cursor = cursor
 	}
 	return v
+}
+
+// addMargin surrounds the frame with the blank margin.
+func (m *Model) addMargin(frame string) string {
+	if m.mx == 0 && m.my == 0 {
+		return frame
+	}
+	side := strings.Repeat(" ", m.mx)
+	blank := strings.Repeat(" ", m.width+2*m.mx)
+	lines := strings.Split(frame, "\n")
+	out := make([]string, 0, len(lines)+2*m.my)
+	for range m.my {
+		out = append(out, blank)
+	}
+	for _, l := range lines {
+		out = append(out, side+l+side)
+	}
+	for range m.my {
+		out = append(out, blank)
+	}
+	return strings.Join(out, "\n")
 }
 
 func fit(s string, w int) string {
@@ -59,7 +82,7 @@ func (m *Model) viewNotes() (string, *tea.Cursor) {
 		if lipgloss.Width(hint) > ew {
 			hint = "Start typing…"
 		}
-		body[0] = fit(m.st.guide.Italic(true).Render(hint), ew)
+		body[0] = fit(m.st.placeholder.Render(hint), ew)
 	}
 	left := strings.Repeat(" ", ex)
 	right := strings.Repeat(" ", max(0, m.width-ex-ew))

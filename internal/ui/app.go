@@ -67,8 +67,9 @@ type Options struct {
 type Model struct {
 	opts   Options
 	mode   mode
-	width  int
+	width  int // drawable area, inside the margin
 	height int
+	mx, my int // margin around the app, in cells
 
 	themes   themeSet
 	themeSel string // configured theme name
@@ -378,7 +379,19 @@ const (
 	statusRows = 2 // hotkey bar plus status line
 )
 
-// editorRect is the editor's area on screen.
+// resize fits the app to the terminal, keeping a margin so the tab bar and
+// status line don't touch the edges (e.g. a tmux pane border). Small
+// terminals get no margin.
+func (m *Model) resize(w, h int) {
+	m.mx, m.my = 0, 0
+	if w >= 40 && h >= 12 {
+		m.mx, m.my = 2, 1
+	}
+	m.width, m.height = max(1, w-2*m.mx), max(1, h-2*m.my)
+	m.layout()
+}
+
+// editorRect is the editor's area on screen, inside the margin.
 func (m *Model) editorRect() (x, y, w, h int) {
 	padL := 3
 	if m.width < 50 {
@@ -402,6 +415,22 @@ func (m *Model) layout() {
 
 // Update implements tea.Model.
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	// Mouse coordinates arrive in terminal cells; make them relative to the
+	// area inside the margin, which is what everything else works in.
+	switch mm := msg.(type) {
+	case tea.MouseClickMsg:
+		mm.X, mm.Y = mm.X-m.mx, mm.Y-m.my
+		msg = mm
+	case tea.MouseReleaseMsg:
+		mm.X, mm.Y = mm.X-m.mx, mm.Y-m.my
+		msg = mm
+	case tea.MouseMotionMsg:
+		mm.X, mm.Y = mm.X-m.mx, mm.Y-m.my
+		msg = mm
+	case tea.MouseWheelMsg:
+		mm.X, mm.Y = mm.X-m.mx, mm.Y-m.my
+		msg = mm
+	}
 	_, cmd := m.update(msg)
 	if m.mode == modeNotes {
 		if sc := m.stateChanged(); sc != nil {
@@ -428,8 +457,7 @@ func (m *Model) stateChanged() tea.Cmd {
 func (m *Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.width, m.height = msg.Width, msg.Height
-		m.layout()
+		m.resize(msg.Width, msg.Height)
 		return m, nil
 	case tea.BackgroundColorMsg:
 		m.darkBg = msg.IsDark()
