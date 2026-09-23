@@ -33,6 +33,11 @@ Sleep 400ms
 Type "Project ideas" Enter Tab
 Type "terminal pomodoro timer" Enter
 Type "notes sync over git"
+Sleep 500ms
+
+Ctrl+T
+Sleep 400ms
+Type "Meeting notes"
 Sleep 800ms
 
 # Find across notes: jumps back to the shopping list
@@ -43,9 +48,11 @@ Sleep 1.5s
 Escape
 Sleep 500ms
 
-# Alt+Shift+Right moves the note one place right
+# Alt+Shift+Right moves the note one place right, twice
 Type@0ms "[1;4C"
 Sleep 1.2s
+Type@0ms "[1;4C"
+Sleep 1.5s
 
 # Delete it, then Ctrl+Z brings it back
 Ctrl+W
