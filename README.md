@@ -1,5 +1,6 @@
 # cool-notes
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Built with Claude Code](https://img.shields.io/badge/Built_with-Claude_Code-D97757?logo=claude&logoColor=white)](https://claude.com/claude-code)
 
 A tabbed note editor for the terminal. All your notes are stored together in a
@@ -181,3 +182,7 @@ tests, builds and publishes the binaries:
 ```sh
 git tag -a v0.2.0 -m "cool-notes v0.2.0" && git push origin v0.2.0
 ```
+
+## License
+
+MIT, see [LICENSE](LICENSE).
