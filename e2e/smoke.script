@@ -1,0 +1,62 @@
+# End-to-end smoke test for cool-note. Run with e2e/run.sh.
+wait-for Start typing
+
+# Typing, Tab indentation and auto-indent
+type Groceries
+key enter tab
+type milk
+key enter
+type eggs
+key enter shift+tab
+type Done
+assert Groceries ×
+assert │   eggs
+capture first-note
+
+# New tab via keyboard, then via mouse on the + button
+key ctrl+t
+wait-for Start typing
+type Second
+assert note 2/2
+click 27,0
+wait-for note 3/3
+type Third
+capture three-tabs
+
+# Switch tabs by keyboard and by clicking a tab
+key alt+left
+assert note 2/3
+click 3,0
+assert note 1/3
+assert Groceries
+
+# Delete with confirmation: cancel first, then confirm
+key ctrl+w
+wait-for Delete this note?
+key esc
+wait-gone Delete this note?
+assert note 1/3
+key alt+9
+key ctrl+w
+wait-for “Third” will be removed
+key y
+wait-for deleted “Third”
+assert note 2/2
+capture after-delete
+
+# Help overlay
+key f1
+wait-for next / previous theme
+key esc
+wait-gone next / previous theme
+
+# Mouse selection: double-click a word and replace it
+click 3,0
+dblclick 8,3
+type MILK
+assert │   MILK
+
+# Resize reflows without losing content
+resize 50x12
+assert │   MILK
+capture resized
