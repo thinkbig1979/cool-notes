@@ -7,7 +7,7 @@ A tabbed note editor for the terminal. All your notes are stored together in a
 single plain-text file, one tab per note, separated by marker lines. You can
 open that file in any other editor. Changes save as you type.
 
-![cool-notes demo: notes in tabs, find across notes, moving and restoring a note, then quitting and reopening where you left off](docs/demo.gif)
+![cool-notes demo: notes in tabs, find and replace, moving and restoring a note, then quitting and reopening where you left off](docs/demo.gif)
 
 ## Install
 
@@ -96,14 +96,15 @@ cool-notes --version
 |---|---|
 | `Ctrl+T` | New note (appended to the file) |
 | `Ctrl+W` | Delete note, after confirmation. `Ctrl+Z` straight after brings it back |
-| `Alt+←/→`, `Ctrl+PgUp/PgDn` | Previous / next note |
-| `Alt+1…9` | Jump to note (9 = last) |
-| `Alt+Shift+←/→`, `Ctrl+Shift+PgUp/PgDn` | Move the note left / right (changes its place in the file) |
+| `Alt+←/→`, `Ctrl+PgUp/PgDn` | Previous / next tab |
+| `Alt+1…8`, `Alt+9` | Go to tab 1–8, or the last tab |
+| `Alt+Shift+←/→`, `Ctrl+Shift+PgUp/PgDn` | Move the tab left / right (changes the note's place in the file) |
 | `Ctrl+F` | Find in all notes. `Enter` / `Shift+Enter` next / previous match, `Esc` closes |
-| `Tab` / `Shift+Tab` | Indent / dedent the line, or every selected line |
+| `Ctrl+R` | Replace, in the current note or all notes (`Alt+N`). `Enter` replaces and moves on, `↓` skips, `Alt+A` replaces all |
+| `Tab` / `Shift+Tab` | Indent / outdent the line, or every selected line |
 | `Shift+arrows`, `Ctrl+A` | Select, select all |
 | `Ctrl+C` / `Ctrl+X` / `Ctrl+V` | Copy / cut / paste (copy also sets the system clipboard via OSC 52) |
-| `Ctrl+Z` / `Ctrl+Y` | Undo / redo |
+| `Ctrl+Z` / `Ctrl+Y` | Undo / redo. Straight after a replace all, `Ctrl+Z` undoes it in every note |
 | `Ctrl+←/→`, `Ctrl+Backspace` | Move / delete by word |
 | `F2` / `Shift+F2` | Next / previous theme |
 | `F1` | Help |
@@ -116,6 +117,11 @@ run it.
 Find ignores case and searches every note. Select a word before `Ctrl+F` to
 search for it. `↑` / `↓` also step through matches, which helps in terminals
 that send `Shift+Enter` as plain `Enter`.
+
+Replace starts in the current note. `Tab` switches between the find and replace
+fields, and `Alt+N` widens the search to all notes. Matching ignores case, and
+the replacement goes in exactly as you typed it. Replacing across notes asks
+first.
 
 Mouse: click a tab to open it, `×` to delete it (middle-click works too), `+`
 for a new note. In the text, click to place the cursor, drag to select,

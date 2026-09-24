@@ -48,6 +48,16 @@ Sleep 1.5s
 Escape
 Sleep 500ms
 
+# Replace: Ctrl+R picks up the selected "eggs", Enter replaces it
+Ctrl+R
+Sleep 800ms
+Type "6 eggs"
+Sleep 600ms
+Enter
+Sleep 1.2s
+Escape
+Sleep 500ms
+
 # Alt+Shift+Right moves the note one place right, twice
 Type@0ms "[1;4C"
 Sleep 1.2s
@@ -72,7 +82,7 @@ Sleep 1.5s
 
 Type "cool-notes --file notes.txt" Sleep 300ms Enter
 Sleep 1.8s
-Type " (a dozen)"
+Type " (free range)"
 Sleep 2.5s
 
 Hide

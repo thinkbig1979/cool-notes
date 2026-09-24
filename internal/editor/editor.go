@@ -92,6 +92,25 @@ func (e *Editor) ReplaceText(s string) {
 	e.changed()
 }
 
+// ReplaceRange replaces the text from a to b, which must be on one line, with
+// s as its own undo step, and leaves the cursor after the new text.
+func (e *Editor) ReplaceRange(a, b Pos, s string) {
+	a, b = e.clamp(a), e.clamp(b)
+	if a.Row != b.Row || b.Col < a.Col {
+		return
+	}
+	e.pushUndo(editOther)
+	line := e.lines[a.Row]
+	r := []rune(strings.ReplaceAll(s, "\n", " "))
+	nl := make([]rune, 0, len(line)-(b.Col-a.Col)+len(r))
+	nl = append(append(append(nl, line[:a.Col]...), r...), line[b.Col:]...)
+	e.lines[a.Row] = nl
+	e.invalidate(a.Row)
+	e.sel = false
+	e.SetCursor(Pos{a.Row, a.Col + len(r)})
+	e.changed()
+}
+
 // Text returns the document.
 func (e *Editor) Text() string {
 	var b strings.Builder

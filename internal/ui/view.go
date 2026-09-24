@@ -105,6 +105,8 @@ func (m *Model) viewNotes() (string, *tea.Cursor) {
 	switch {
 	case m.modal == modalConfirmDelete:
 		base = m.overlay(base, m.viewConfirm())
+	case m.modal == modalConfirmReplace:
+		base = m.overlay(base, m.viewConfirmReplace())
 	case m.modal == modalHelp:
 		base = m.overlay(base, m.viewHelp())
 	case searchX >= 0:
@@ -216,6 +218,8 @@ func (m *Model) viewStatus() string {
 		left += st.statusErr.Render(" " + m.flash)
 	case m.flash != "":
 		left += st.status.Render(" " + m.flash)
+	case m.search != nil && m.search.replace != nil:
+		left += st.statusMuted.Render(" " + m.replaceHints())
 	default:
 		left += st.statusMuted.Render(" " + config.ShortenPath(m.file.Path))
 	}
@@ -225,7 +229,7 @@ func (m *Model) viewStatus() string {
 		st.statusMuted.Render("  ·  ") +
 		st.status.Render(fmt.Sprintf("note %d/%d ", m.active+1, len(m.tabs)))
 	rw := lipgloss.Width(right)
-	if rw+10 > m.width {
+	if rw+10 > m.width || m.search != nil && m.search.replace != nil {
 		right, rw = "", 0
 	}
 	lw := m.width - rw
@@ -281,28 +285,49 @@ func (m *Model) insideDialog(x, y int) bool {
 }
 
 func (m *Model) viewConfirm() string {
-	st := m.st
 	title := "Untitled"
 	if m.confirmIdx < len(m.tabs) {
 		title = tabLabel(tabTitle(m.tabs[m.confirmIdx].ed.Text()), 36)
 	}
+	return m.confirmDialog("Delete this note?",
+		"“"+title+"” will be removed from",
+		filepath.Base(m.file.Path)+". Ctrl+Z brings it back.",
+		"Delete", "y delete  ·  n / esc cancel")
+}
+
+func (m *Model) viewConfirmReplace() string {
+	s := m.search
+	notes := map[int]bool{}
+	for _, mt := range s.matches {
+		notes[mt.tab] = true
+	}
+	return m.confirmDialog("Replace in all notes?",
+		"“"+tabLabel(s.query.Text(), 20)+"” → “"+tabLabel(s.replace.Text(), 20)+"”: "+
+			plural(len(s.matches), "match", "matches")+" in "+plural(len(notes), "note", "notes")+".",
+		"Ctrl+Z right after undoes it.",
+		"Replace", "y replace  ·  n / esc cancel")
+}
+
+// confirmDialog draws a two-button confirmation with a two-line message.
+func (m *Model) confirmDialog(title, text, muted, confirm, keys string) string {
+	st := m.st
 	del, cancel := st.button, st.button
 	if m.confirmFocus == 0 {
 		del = st.dangerFocus
 	} else {
 		cancel = st.buttonFocus
 	}
-	delBtn, cancelBtn := del.Render("Delete"), cancel.Render("Cancel")
+	delBtn, cancelBtn := del.Render(confirm), cancel.Render("Cancel")
 	gap := st.dialogText.Render("  ")
 	lines := []string{
-		st.dialogTitle.Render("Delete this note?"),
+		st.dialogTitle.Render(title),
 		"",
-		st.dialogText.Render("“" + title + "” will be removed from"),
-		st.dialogMuted.Render(filepath.Base(m.file.Path) + ". Ctrl+Z brings it back."),
+		st.dialogText.Render(text),
+		st.dialogMuted.Render(muted),
 		"",
 		delBtn + gap + cancelBtn,
 		"",
-		st.dialogMuted.Render("y delete  ·  n / esc cancel"),
+		st.dialogMuted.Render(keys),
 	}
 	// Button hits relative to the box: border (1) + top padding (1), and
 	// border (1) + left padding (3).
@@ -317,20 +342,20 @@ func (m *Model) viewConfirm() string {
 }
 
 var helpKeys = [][2]string{
-	{"Ctrl+T", "new note"},
-	{"Ctrl+W", "delete note"},
-	{"Alt+← →  Ctrl+PgUp/PgDn", "switch note"},
-	{"Alt+1…9", "jump to note"},
-	{"Alt+Shift+← →", "move note left / right"},
+	{"Ctrl+T  Ctrl+W", "new / delete note (asks first)"},
+	{"Alt+← →  Ctrl+PgUp/PgDn", "previous / next tab"},
+	{"Alt+1…8  Alt+9", "go to tab 1–8 / last tab"},
+	{"Alt+Shift+← →", "move tab (or Ctrl+Shift+PgUp/PgDn)"},
 	{"Ctrl+F", "find in all notes"},
-	{"Tab  Shift+Tab", "indent / dedent"},
+	{"Ctrl+R", "replace, in this note or all (Alt+N)"},
+	{"Tab  Shift+Tab", "indent / outdent"},
 	{"Shift+arrows  Ctrl+A", "select / select all"},
 	{"Ctrl+C  Ctrl+X  Ctrl+V", "copy / cut / paste"},
-	{"Ctrl+Z  Ctrl+Y", "undo / redo (also undeletes a note)"},
-	{"Ctrl+← →", "move by word"},
+	{"Ctrl+Z  Ctrl+Y", "undo / redo, also a delete or replace all"},
 	{"F2  Shift+F2", "next / previous theme"},
 	{"Ctrl+Q", "quit"},
-	{"Mouse", "click tab, × to delete, + for new"},
+	{"Mouse", "click or scroll the tabs to switch, + new"},
+	{"", "× or middle-click a tab to delete it"},
 	{"", "click, drag, double/triple-click to select"},
 }
 

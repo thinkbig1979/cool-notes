@@ -1,9 +1,10 @@
 # End-to-end smoke test for cool-notes. Run with e2e/run.sh.
 # Colors are catppuccin-mocha: auto theme on the default black background.
 wait-for Start typing
-# 1-row, 2-column margin around the app; readable muted placeholder
+# 2-column margin at the sides, none at top and bottom; readable muted placeholder
 assert-style text="Start typing." italic fg=#7f849c
-assert-style 0,0,80 plain
+assert-style 0,0,2 plain
+assert-style 0,23,2 plain
 
 # Typing, Tab indentation and auto-indent
 type Groceries
@@ -17,7 +18,7 @@ assert Groceries ×
 assert │   eggs
 # Active tab uses the accent; indent guides are dim
 assert-style text=" Groceries " bold bg=#cba6f7
-assert-style 5,4 fg=#313244
+assert-style 5,3 fg=#313244
 capture first-note
 
 # New tab via keyboard, then via mouse on the + button
@@ -25,7 +26,7 @@ key ctrl+t
 wait-for Start typing
 type Second
 assert note 2/2
-click 29,1
+click 29,0
 wait-for note 3/3
 type Third
 # Inactive tabs lose the accent
@@ -36,7 +37,7 @@ capture three-tabs
 # Switch tabs by keyboard and by clicking a tab
 key alt+left
 assert note 2/3
-click 5,1
+click 5,0
 assert note 1/3
 assert Groceries
 key ctrl+tab
@@ -82,24 +83,24 @@ key esc
 wait-gone next / previous theme
 
 # Mouse selection: double-click a word and replace it
-click 5,1
-dblclick 10,4
+click 5,0
+dblclick 10,3
 # The selected word is highlighted, the rest of the line is not
-assert-style 9,4,4 bg=#45475a
-assert-style 5,3,9 bg=default
+assert-style 9,3,4 bg=#45475a
+assert-style 5,2,9 bg=default
 type MILK
 assert │   MILK
 
 # Hotkey bar: shows the main keys, and clicking ^T adds a note
 assert-style text=" ^T " bold bg=#313244
 assert F1  help
-click 4,21
+click 4,22
 wait-for note 3/3
 key ctrl+w
 wait-for Delete this note?
 key y
 wait-for note 2/2
-click 5,1
+click 5,0
 assert │   MILK
 
 # Find across notes: jumps to the match in another note and selects it
@@ -108,7 +109,7 @@ wait-for type to search all notes
 type SECOND
 wait-for 1/1
 assert note 2/2
-assert-style 5,3,6 bg=#45475a
+assert-style 5,2,6 bg=#45475a
 capture find
 key esc
 wait-gone Enter next
@@ -120,8 +121,39 @@ assert note 1/2
 assert-style text=" Second " bold bg=#cba6f7
 key alt+shift+right
 assert note 2/2
-click 5,1
+click 5,0
 assert │   MILK
+
+# Replace in the current note, then undo it in one step
+key ctrl+r
+wait-for type to search this note
+type eggs
+key tab
+type EGGS
+wait-for 1/1 in this note
+assert Alt+N all notes
+capture replace
+key alt+a
+wait-for replaced 1 match
+assert │   EGGS
+key ctrl+z
+wait-for undid replace
+assert │   eggs
+
+# Replace across all notes asks first
+key ctrl+r
+type e
+key tab
+type E
+key alt+n
+wait-for in all notes
+key alt+a
+wait-for Replace in all notes?
+capture replace-confirm
+key esc
+wait-gone Replace in all notes?
+key esc
+assert │   eggs
 
 # Resize reflows without losing content
 resize 50x12

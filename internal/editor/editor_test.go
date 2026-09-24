@@ -276,3 +276,17 @@ func TestUndoSnapshotsAreNotCorruptedByLaterEdits(t *testing.T) {
 		t.Fatalf("redo chain ended at %q", e.Text())
 	}
 }
+
+func TestReplaceRangeIsOneUndoStep(t *testing.T) {
+	e := newEd("say hello there", 80, 5)
+	e.ReplaceRange(Pos{0, 4}, Pos{0, 9}, "hi")
+	if e.Text() != "say hi there" || e.Cursor() != (Pos{0, 6}) {
+		t.Fatalf("text %q cursor %+v", e.Text(), e.Cursor())
+	}
+	typeText(e, "!")
+	e.Undo()
+	e.Undo()
+	if e.Text() != "say hello there" {
+		t.Fatalf("after undo: %q", e.Text())
+	}
+}

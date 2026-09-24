@@ -142,6 +142,9 @@ func (m *Model) viewHints(y int) string {
 
 // runAction does what a clicked hint says.
 func (m *Model) runAction(a action) tea.Cmd {
+	if a != actUndo {
+		m.replaced = nil
+	}
 	switch a {
 	case actNew:
 		return m.addTab()
@@ -156,6 +159,9 @@ func (m *Model) runAction(a action) tea.Cmd {
 	case actUndo:
 		if m.deleted != nil {
 			return m.restoreTab()
+		}
+		if m.replaced != nil {
+			return m.undoReplaceAll()
 		}
 		return m.edit(func(e *editor.Editor) { e.Undo() })
 	case actFind:

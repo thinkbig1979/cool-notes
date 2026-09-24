@@ -33,6 +33,7 @@ type modal int
 const (
 	modalNone modal = iota
 	modalConfirmDelete
+	modalConfirmReplace
 	modalHelp
 )
 
@@ -115,6 +116,8 @@ type Model struct {
 	flashErr bool
 
 	deleted *deletedTab // last deleted note, restorable with Ctrl+Z until the next key
+	// notes changed by the last replace all, undone together by Ctrl+Z until the next key
+	replaced []*tab
 
 	search *search // non-nil while the find bar is open
 }
@@ -320,6 +323,7 @@ func (m *Model) applyExternal(ext *store.External) tea.Cmd {
 	m.active = clampInt(m.active, 0, len(m.tabs)-1)
 	m.modal = modalNone
 	m.deleted = nil
+	m.replaced = nil
 	m.search = nil
 	m.layout()
 	return m.setFlash("reloaded: file changed on disk", false)
@@ -358,6 +362,7 @@ func (m *Model) closeTab(i int) tea.Cmd {
 	}
 	title := tabTitle(m.tabs[i].ed.Text())
 	m.deleted = &deletedTab{t: m.tabs[i], idx: i}
+	m.replaced = nil
 	m.tabs = append(m.tabs[:i], m.tabs[i+1:]...)
 	if len(m.tabs) == 0 {
 		m.tabs = append(m.tabs, m.newTab(""))
@@ -420,13 +425,14 @@ const (
 	statusRows = 2 // hotkey bar plus status line
 )
 
-// resize fits the app to the terminal, keeping a margin so the tab bar and
-// status line don't touch the edges (e.g. a tmux pane border). Small
-// terminals get no margin.
+// resize fits the app to the terminal, keeping a side margin so the tab bar
+// and status line don't touch the edges (e.g. a tmux pane border). There is no
+// top or bottom margin, to keep the rows for notes. Small terminals get no
+// margin.
 func (m *Model) resize(w, h int) {
 	m.mx, m.my = 0, 0
 	if w >= 40 && h >= 12 {
-		m.mx, m.my = 2, 1
+		m.mx = 2
 	}
 	m.width, m.height = max(1, w-2*m.mx), max(1, h-2*m.my)
 	m.layout()
@@ -542,6 +548,7 @@ func (m *Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, m.handleKey(msg)
 	case tea.PasteMsg:
 		m.deleted = nil
+		m.replaced = nil
 		if m.search != nil {
 			m.search.query.InsertText(msg.Content)
 			return m, m.searchUpdated()
@@ -592,7 +599,11 @@ func (m *Model) handleKey(msg tea.KeyPressMsg) tea.Cmd {
 	if ks == "ctrl+z" && m.deleted != nil && m.modal == modalNone && m.search == nil {
 		return m.restoreTab()
 	}
+	if ks == "ctrl+z" && m.replaced != nil && m.modal == modalNone && m.search == nil {
+		return m.undoReplaceAll()
+	}
 	m.deleted = nil
+	m.replaced = nil
 	if m.search != nil && m.modal == modalNone {
 		return m.searchKey(msg)
 	}
@@ -609,6 +620,21 @@ func (m *Model) handleKey(msg tea.KeyPressMsg) tea.Cmd {
 		case "enter", "space":
 			if m.confirmFocus == 0 {
 				return m.closeTab(m.confirmIdx)
+			}
+			m.modal = modalNone
+		case "left", "right", "tab", "shift+tab", "h", "l":
+			m.confirmFocus = 1 - m.confirmFocus
+		}
+		return nil
+	case modalConfirmReplace:
+		switch ks {
+		case "y", "Y":
+			return m.doReplaceAll()
+		case "n", "N", "esc":
+			m.modal = modalNone
+		case "enter", "space":
+			if m.confirmFocus == 0 {
+				return m.doReplaceAll()
 			}
 			m.modal = modalNone
 		case "left", "right", "tab", "shift+tab", "h", "l":
@@ -638,6 +664,8 @@ func (m *Model) handleKey(msg tea.KeyPressMsg) tea.Cmd {
 		return m.moveTab(1)
 	case "ctrl+f":
 		m.openSearch()
+	case "ctrl+r":
+		m.openReplace()
 	case "f1":
 		m.modal = modalHelp
 	case "f2", "shift+f2":
@@ -730,8 +758,11 @@ func (m *Model) handleClick(mo tea.Mouse) tea.Cmd {
 	case modalHelp:
 		m.modal = modalNone
 		return nil
-	case modalConfirmDelete:
+	case modalConfirmDelete, modalConfirmReplace:
 		if h, ok := findHit(m.dialogHits, mo.X, mo.Y); ok {
+			if h.kind == hitConfirm && m.modal == modalConfirmReplace {
+				return m.doReplaceAll()
+			}
 			if h.kind == hitConfirm {
 				return m.closeTab(m.confirmIdx)
 			}

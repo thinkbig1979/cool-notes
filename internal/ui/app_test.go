@@ -60,6 +60,14 @@ func press(m *Model, keys ...string) {
 			msg = tea.KeyPressMsg{Code: tea.KeyEnter, Mod: tea.ModShift}
 		case "backspace":
 			msg = tea.KeyPressMsg{Code: tea.KeyBackspace}
+		case "ctrl+r":
+			msg = tea.KeyPressMsg{Code: 'r', Mod: tea.ModCtrl}
+		case "tab":
+			msg = tea.KeyPressMsg{Code: tea.KeyTab}
+		case "alt+a":
+			msg = tea.KeyPressMsg{Code: 'a', Mod: tea.ModAlt}
+		case "alt+n":
+			msg = tea.KeyPressMsg{Code: 'n', Mod: tea.ModAlt}
 		default:
 			for _, r := range k {
 				m.Update(tea.KeyPressMsg{Code: r, Text: string(r)})
@@ -312,11 +320,11 @@ func TestMarginInsetsAppAndShiftsInput(t *testing.T) {
 	m.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
 	v := m.View()
 	lines := strings.Split(v.Content, "\n")
-	if len(lines) != 24 || strings.TrimSpace(lines[0]) != "" || strings.TrimSpace(lines[23]) != "" {
-		t.Fatalf("expected blank first and last rows")
+	if len(lines) != 24 || m.my != 0 || m.height != 24 {
+		t.Fatalf("expected no top or bottom margin: %d lines, my %d", len(lines), m.my)
 	}
-	if !strings.HasPrefix(lines[1], "  ") || strings.TrimSpace(lines[1][:2]) != "" {
-		t.Fatalf("expected left margin: %q", lines[1])
+	if !strings.HasPrefix(lines[0], "  ") || !strings.Contains(lines[0], "one") {
+		t.Fatalf("expected the tab bar on the first row, after the left margin: %q", lines[0])
 	}
 	if v.Cursor == nil || v.Cursor.X < m.mx || v.Cursor.Y < m.my {
 		t.Fatalf("cursor not shifted into the margin: %+v", v.Cursor)
