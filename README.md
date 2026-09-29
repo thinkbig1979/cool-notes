@@ -1,7 +1,16 @@
-# cool-notes
+<h1 align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/logo/cool-notes-logo-white.svg">
+    <img src="docs/logo/cool-notes-logo-mono-0061e0.svg" alt="Cool Notes" width="360">
+  </picture>
+</h1>
+
+<div align="center">
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Built with Claude Code](https://img.shields.io/badge/Built_with-Claude_Code-D97757?logo=claude&logoColor=white)](https://claude.com/claude-code)
+
+</div>
 
 A tabbed note editor for the terminal. All your notes are stored together in a
 single plain-text file, one tab per note, separated by marker lines. You can
