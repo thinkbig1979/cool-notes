@@ -8,6 +8,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/thinkbig1979/cool-notes/internal/store"
 )
 
 // Config holds user settings.
@@ -108,11 +110,7 @@ func writeJSON(name string, v any) error {
 	if err != nil {
 		return err
 	}
-	tmp := name + ".tmp"
-	if err := os.WriteFile(tmp, append(data, '\n'), 0o600); err != nil {
-		return err
-	}
-	return os.Rename(tmp, name)
+	return store.WriteAtomic(name, append(data, '\n'))
 }
 
 // Load reads the config. A missing config returns a zero Config and no error.

@@ -41,8 +41,9 @@ const (
 type (
 	saveTickMsg struct{ gen uint64 }
 	savedMsg    struct {
-		gen uint64
-		err error
+		gen    uint64
+		backup string // set when the save backed up another program's change
+		err    error
 	}
 	pollTickMsg struct{}
 	externalMsg struct {
@@ -183,12 +184,14 @@ func (m *Model) openNotes(path string) error {
 	}
 	if len(m.tabs) == 0 {
 		m.tabs = append(m.tabs, m.newTab(""))
-		if err := f.Save(0, m.texts()); err != nil {
+		if _, err := f.Save(0, m.texts()); err != nil {
 			return fmt.Errorf("creating %s: %w", path, err)
 		}
 	}
 	st := config.LoadState(m.opts.ConfigDir)
-	if st.File == path {
+	// State stores the resolved path; path is the one given, kept for state
+	// written before symlinks were resolved.
+	if st.File == f.Path || st.File == path {
 		m.active = clampInt(st.Active, 0, len(m.tabs)-1)
 		for i, c := range st.Cursors {
 			if i < len(m.tabs) {
@@ -260,11 +263,11 @@ func (m *Model) saveCmd() tea.Cmd {
 	seq, gen := m.saveSeq, m.saveGen
 	notes, st, file, dir := m.texts(), m.state(), m.file, m.opts.ConfigDir
 	return func() tea.Msg {
-		err := file.Save(seq, notes)
+		backup, err := file.Save(seq, notes)
 		if err == nil {
 			config.SaveState(dir, st)
 		}
-		return savedMsg{gen: gen, err: err}
+		return savedMsg{gen: gen, backup: backup, err: err}
 	}
 }
 
@@ -274,7 +277,7 @@ func (m *Model) Flush() error {
 		return nil
 	}
 	m.saveSeq++
-	if err := m.file.Save(m.saveSeq, m.texts()); err != nil {
+	if _, err := m.file.Save(m.saveSeq, m.texts()); err != nil {
 		return err
 	}
 	m.savedGen = m.saveGen
@@ -535,6 +538,9 @@ func (m *Model) update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.err == nil && msg.gen > m.savedGen {
 			m.savedGen = msg.gen
 		}
+		if msg.backup != "" {
+			return m, m.setFlash("file changed on disk; kept your edits, theirs saved to "+config.ShortenPath(msg.backup), true)
+		}
 	case pollTickMsg:
 		m.polling = false
 		return m, m.checkExternal()
@@ -611,30 +617,15 @@ func (m *Model) handleKey(msg tea.KeyPressMsg) tea.Cmd {
 	case modalHelp:
 		m.modal = modalNone
 		return nil
-	case modalConfirmDelete:
+	case modalConfirmDelete, modalConfirmReplace:
 		switch ks {
 		case "y", "Y":
-			return m.closeTab(m.confirmIdx)
+			return m.confirm()
 		case "n", "N", "esc":
 			m.modal = modalNone
 		case "enter", "space":
 			if m.confirmFocus == 0 {
-				return m.closeTab(m.confirmIdx)
-			}
-			m.modal = modalNone
-		case "left", "right", "tab", "shift+tab", "h", "l":
-			m.confirmFocus = 1 - m.confirmFocus
-		}
-		return nil
-	case modalConfirmReplace:
-		switch ks {
-		case "y", "Y":
-			return m.doReplaceAll()
-		case "n", "N", "esc":
-			m.modal = modalNone
-		case "enter", "space":
-			if m.confirmFocus == 0 {
-				return m.doReplaceAll()
+				return m.confirm()
 			}
 			m.modal = modalNone
 		case "left", "right", "tab", "shift+tab", "h", "l":
@@ -688,6 +679,14 @@ func (m *Model) handleKey(msg tea.KeyPressMsg) tea.Cmd {
 		return m.edit(func(e *editor.Editor) { e.HandleKey(msg) })
 	}
 	return nil
+}
+
+// confirm runs the action of the open confirm dialog.
+func (m *Model) confirm() tea.Cmd {
+	if m.modal == modalConfirmReplace {
+		return m.doReplaceAll()
+	}
+	return m.closeTab(m.confirmIdx)
 }
 
 func (m *Model) copy(cut bool) tea.Cmd {
@@ -760,11 +759,8 @@ func (m *Model) handleClick(mo tea.Mouse) tea.Cmd {
 		return nil
 	case modalConfirmDelete, modalConfirmReplace:
 		if h, ok := findHit(m.dialogHits, mo.X, mo.Y); ok {
-			if h.kind == hitConfirm && m.modal == modalConfirmReplace {
-				return m.doReplaceAll()
-			}
 			if h.kind == hitConfirm {
-				return m.closeTab(m.confirmIdx)
+				return m.confirm()
 			}
 			m.modal = modalNone
 		} else if !m.insideDialog(mo.X, mo.Y) {

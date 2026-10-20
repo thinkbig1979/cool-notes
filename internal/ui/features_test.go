@@ -154,6 +154,20 @@ func TestReplaceInCurrentNote(t *testing.T) {
 	}
 }
 
+func TestUndoReplaceAllSkipsNotesItDidNotChange(t *testing.T) {
+	m := newTestModel(t, "abc", "xabc")
+	press(m, "X")
+	// Matching ignores case: the first note matches but is already "Xabc".
+	press(m, "ctrl+r", "xabc", "tab", "Xabc", "alt+n", "alt+a", "y")
+	if got := m.texts(); !reflect.DeepEqual(got, []string{"Xabc", "Xabc"}) {
+		t.Fatalf("after replace all: %q", got)
+	}
+	press(m, "ctrl+z")
+	if got := m.texts(); !reflect.DeepEqual(got, []string{"Xabc", "xabc"}) {
+		t.Fatalf("undo should only revert the replaced note: %q", got)
+	}
+}
+
 func TestReplaceAllNotesAsksAndUndoesTogether(t *testing.T) {
 	m := newTestModel(t, "a x", "x", "none")
 	press(m, "ctrl+r", "x", "tab", "y", "alt+n", "alt+a")

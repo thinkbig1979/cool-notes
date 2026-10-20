@@ -192,6 +192,27 @@ func TestStateRestoredOnReopen(t *testing.T) {
 	}
 }
 
+func TestStateRestoredThroughSymlink(t *testing.T) {
+	m := newTestModel(t, "one", "two")
+	link := filepath.Join(t.TempDir(), "link.txt")
+	if err := os.Symlink(m.file.Path, link); err != nil {
+		t.Skip("symlinks not supported:", err)
+	}
+	m, err := New(Options{ConfigDir: m.opts.ConfigDir, FileFlag: link})
+	if err != nil {
+		t.Fatal(err)
+	}
+	press(m, "alt+left")
+	m.Flush()
+	m2, err := New(Options{ConfigDir: m.opts.ConfigDir, FileFlag: link})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if m2.active != 1 {
+		t.Fatalf("active = %d, want the note open at quit", m2.active)
+	}
+}
+
 func TestViewFitsEverySize(t *testing.T) {
 	notes := make([]string, 15)
 	for i := range notes {

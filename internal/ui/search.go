@@ -285,8 +285,12 @@ func (m *Model) doReplaceAll() tea.Cmd {
 	m.replaced = m.replaced[:0]
 	for _, i := range order {
 		t := m.tabs[i]
+		before := t.ed.Version()
 		t.ed.ReplaceText(replaceMatches(t.ed.Text(), byTab[i], repl))
-		m.replaced = append(m.replaced, t)
+		// A replacement equal to the text adds no undo step to take back.
+		if t.ed.Version() != before {
+			m.replaced = append(m.replaced, t)
+		}
 	}
 	m.deleted = nil
 	m.search = nil

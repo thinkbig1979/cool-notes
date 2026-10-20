@@ -121,17 +121,17 @@ func TestFileSaveLoadAndExternal(t *testing.T) {
 	if err != nil || len(notes) != 0 {
 		t.Fatalf("Load missing file = %q, %v", notes, err)
 	}
-	if err := f.Save(1, []string{"one", "two"}); err != nil {
+	if _, err := f.Save(1, []string{"one", "two"}); err != nil {
 		t.Fatal(err)
 	}
 	if ext, err := f.CheckExternal(); err != nil || ext != nil {
 		t.Fatalf("own write reported as external: %v %v", ext, err)
 	}
 	// Stale save is skipped.
-	if err := f.Save(2, []string{"new"}); err != nil {
+	if _, err := f.Save(2, []string{"new"}); err != nil {
 		t.Fatal(err)
 	}
-	if err := f.Save(1, []string{"stale"}); err != nil {
+	if _, err := f.Save(1, []string{"stale"}); err != nil {
 		t.Fatal(err)
 	}
 	if got, _ := f.Load(); !reflect.DeepEqual(got, []string{"new"}) {
