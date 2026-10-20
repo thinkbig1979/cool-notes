@@ -102,6 +102,15 @@ func (f *File) changed(info os.FileInfo) bool {
 type External struct {
 	Notes []string
 	Raw   []byte
+	info  os.FileInfo
+}
+
+// Overwritten reports whether we saved over ext since it was reported, so
+// the file no longer holds it.
+func (f *File) Overwritten(ext *External) bool {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.changed(ext.info)
 }
 
 // CheckExternal reports whether the file changed since our last read or
@@ -125,7 +134,7 @@ func (f *File) CheckExternal() (*External, error) {
 		return nil, err
 	}
 	f.known = info
-	return &External{Notes: Parse(string(data)), Raw: data}, nil
+	return &External{Notes: Parse(string(data)), Raw: data, info: info}, nil
 }
 
 // Backup writes data next to the notes file under a timestamped name and

@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
@@ -175,6 +176,48 @@ func TestExternalChangeWhileDirtyKeepsBoth(t *testing.T) {
 	}
 	if data, _ := os.ReadFile(backups[0]); string(data) != theirs {
 		t.Fatalf("backup = %q", data)
+	}
+}
+
+func TestExternalChangeOverwrittenBySaveIsKept(t *testing.T) {
+	m := newTestModel(t, "mine")
+	press(m, "X")
+	theirs := store.Serialize([]string{"theirs"})
+	time.Sleep(10 * time.Millisecond)
+	os.WriteFile(m.file.Path, []byte(theirs), 0o600)
+	// The poll reads their version, then our save lands before the poll's
+	// result is handled, so the model is clean when it arrives.
+	ext, _ := m.file.CheckExternal()
+	m.Update(m.saveCmd()())
+	if m.dirty() {
+		t.Fatal("save should have finished")
+	}
+	m.Update(externalMsg{ext: ext})
+	if got := m.texts(); !reflect.DeepEqual(got, []string{"Xmine"}) {
+		t.Fatalf("tabs = %q, want our text kept", got)
+	}
+	if got := fileNotes(t, m); !reflect.DeepEqual(got, []string{"Xmine"}) {
+		t.Fatalf("file = %q", got)
+	}
+	backups, _ := filepath.Glob(m.file.Path + ".conflict-*.bak")
+	if len(backups) != 1 {
+		t.Fatalf("backups = %v", backups)
+	}
+	if data, _ := os.ReadFile(backups[0]); string(data) != theirs {
+		t.Fatalf("backup = %q", data)
+	}
+}
+
+func TestFlushReportsBackup(t *testing.T) {
+	m := newTestModel(t, "mine")
+	press(m, "X")
+	time.Sleep(10 * time.Millisecond)
+	os.WriteFile(m.file.Path, []byte(store.Serialize([]string{"theirs"})), 0o600)
+	if err := m.Flush(); err != nil {
+		t.Fatal(err)
+	}
+	if b := m.FlushBackup(); b == "" || !strings.Contains(b, ".conflict-") {
+		t.Fatalf("FlushBackup = %q", b)
 	}
 }
 

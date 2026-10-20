@@ -109,6 +109,8 @@ type Model struct {
 	saveErr  error
 	polling  bool
 
+	flushBackup string // backup made by the last Flush, reported after quit
+
 	stateKey string // last saved or scheduled session state
 	stateGen uint64
 
@@ -277,12 +279,20 @@ func (m *Model) Flush() error {
 		return nil
 	}
 	m.saveSeq++
-	if _, err := m.file.Save(m.saveSeq, m.texts()); err != nil {
+	backup, err := m.file.Save(m.saveSeq, m.texts())
+	if err != nil {
 		return err
+	}
+	if backup != "" {
+		m.flushBackup = backup
 	}
 	m.savedGen = m.saveGen
 	return config.SaveState(m.opts.ConfigDir, m.state())
 }
+
+// FlushBackup is the backup of another program's change that a Flush made,
+// or "". The app has quit by then, so main reports it.
+func (m *Model) FlushBackup() string { return m.flushBackup }
 
 func (m *Model) startPolling() tea.Cmd {
 	if m.polling {
@@ -302,8 +312,9 @@ func (m *Model) checkExternal() tea.Cmd {
 
 // applyExternal handles the notes file being changed by another program.
 func (m *Model) applyExternal(ext *store.External) tea.Cmd {
-	if m.dirty() {
-		// Our unsaved edits win; keep the outside version so nothing is lost.
+	if m.dirty() || m.file.Overwritten(ext) {
+		// Our unsaved edits win, as does a save that already replaced
+		// theirs; keep the outside version so nothing is lost.
 		name, err := m.file.Backup(ext.Raw)
 		if err != nil {
 			return m.setFlash("file changed on disk, and backing it up failed: "+err.Error(), true)

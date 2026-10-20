@@ -67,11 +67,13 @@ func run(fileFlag string) error {
 	final, runErr := p.Run()
 	// Belt and braces: whatever ended the program, write the latest text.
 	if fm, ok := final.(*ui.Model); ok {
-		if err := fm.Flush(); err != nil {
-			return fmt.Errorf("saving notes: %w", err)
-		}
-	} else if err := m.Flush(); err != nil {
+		m = fm
+	}
+	if err := m.Flush(); err != nil {
 		return fmt.Errorf("saving notes: %w", err)
+	}
+	if b := m.FlushBackup(); b != "" {
+		fmt.Fprintln(os.Stderr, "cool-notes: file changed on disk; kept your edits, theirs saved to", config.ShortenPath(b))
 	}
 	return runErr
 }
